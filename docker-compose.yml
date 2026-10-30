@@ -1,9 +1,6 @@
 services:
   python_app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: py-api
+    image: dockerhub.io/${USER_NAME}/apex-api:${IMAGE_TAG}
     container_name: apex-api-container
     restart: unless-stopped
     environment:
