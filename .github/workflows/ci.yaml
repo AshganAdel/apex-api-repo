@@ -7,6 +7,8 @@ on:
     paths-ignore:
       - 'README.md'
       - '.gitignore'
+      - 'docker-compose.yml'
+      - '.env.example'
 
 jobs:
   ci:
