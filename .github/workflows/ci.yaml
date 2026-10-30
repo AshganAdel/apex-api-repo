@@ -57,7 +57,7 @@ jobs:
         run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/apex-api:${{ github.run_number }} .
 
       - name: Image Security Scan
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/apex-api:${{ github.run_number }}
           format: json
