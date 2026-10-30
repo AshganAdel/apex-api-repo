@@ -11,6 +11,17 @@ on:
 jobs:
   ci:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: admin
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: apexdb
+        ports:
+          - 5432:5432
+    env:
+      DATABASE_URL: postgresql://admin:password@localhost:5432/apexdb
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
