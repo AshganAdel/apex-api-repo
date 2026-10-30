@@ -45,7 +45,7 @@ jobs:
       - name: Dependency Scan
         run: |
           pip install safety
-          safety check --full-report > safety-report.txt 2>&1
+          safety scan > safety-report.txt 2>&1
       
       - name: Set Python path
         run: echo "PYTHONPATH=$GITHUB_WORKSPACE" >> $GITHUB_ENV
