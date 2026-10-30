@@ -1,17 +1,16 @@
-import logging
 import json
+import logging
 import time
+from datetime import UTC, datetime
 
-from datetime import datetime, timezone
-
-from fastapi import FastAPI, Depends, HTTPException, Request
-from sqlalchemy.orm import Session
-from sqlalchemy import text
-
-from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import Response
+from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
+from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
 
-from database import engine, get_db, Base
+from database import Base, engine, get_db
 from models import Item
 from schemas import ItemCreate, ItemResponse
 
@@ -20,7 +19,7 @@ from schemas import ItemCreate, ItemResponse
 class JSONFormatter(logging.Formatter):
     def format(self, record):
         return json.dumps({
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "level": record.levelname,
             "message": record.getMessage()
         })
@@ -102,7 +101,7 @@ def readiness(db: Session = Depends(get_db)):
         db.execute(text("SELECT 1"))
         return {"status": "ready", "database": "connected"}
 
-    except Exception:
+    except SQLAlchemyError:
         raise HTTPException(
             status_code=503,
             detail="Database unavailable"
