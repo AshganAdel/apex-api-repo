@@ -1,6 +1,6 @@
 services:
   python_app:
-    image: dockerhub.io/${USER_NAME}/apex-api:${IMAGE_TAG}
+    image: docker.io/ashganadel/apex-api:25
     container_name: apex-api-container
     restart: unless-stopped
     environment:
