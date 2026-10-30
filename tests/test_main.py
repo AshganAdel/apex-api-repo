@@ -44,4 +44,6 @@ def test_metrics():
     assert "http_requests_total" in response.text
 
 def test_intentional_failure():
-    assert 1 == 2
+        result = 1
+        expected = 2
+        assert result == expected
