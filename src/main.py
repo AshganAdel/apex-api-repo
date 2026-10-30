@@ -48,6 +48,7 @@ REQUEST_LATENCY = Histogram(
 
 app = FastAPI(title="Apex Operations API")
 
+Base.metadata.create_all(bind=engine)
 
 # Create database tables
 @app.on_event("startup")
