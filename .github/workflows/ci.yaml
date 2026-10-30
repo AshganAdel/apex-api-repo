@@ -44,8 +44,8 @@ jobs:
 
       - name: Dependency Scan
         run: |
-          pip install safety
-          safety scan > safety-report.txt 2>&1
+          pip install pip-audit
+          pip-audit -r requirements.txt -f json -o safety-report.json
       
       - name: Set Python path
         run: echo "PYTHONPATH=$GITHUB_WORKSPACE" >> $GITHUB_ENV
@@ -59,7 +59,7 @@ jobs:
         with:
           name: ci-reports
           path: |
-            safety-report.txt
+            safety-report.json
             test-results.xml
           retention-days: 30
 
