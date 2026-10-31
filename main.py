@@ -103,10 +103,12 @@ def readiness(db: Session = Depends(get_db)):
         return {"status": "ready", "database": "connected"}
 
     except SQLAlchemyError:
-        raise HTTPException(
-            status_code=503,
-            detail="Database unavailable"
-        )
+      logger.exception("Database readiness check failed")
+
+      raise HTTPException(
+        status_code=503,
+        detail="Database unavailable"
+      )
 
 
 # Create item
