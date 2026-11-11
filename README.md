@@ -1,7 +1,7 @@
 
 # Apex Operations API
 
-A containerized REST API demonstrating a reliable and reproducible application delivery workflow, from code commit to deployment and rollback.
+A containerized REST API demonstrating a reliable and reproducible application delivery workflow, from code commit to deployment.
 
 The project focuses on practical DevOps practices, including containerization, automated testing, CI pipelines, security checks, persistent storage, application observability, and operational procedures.
 
@@ -36,7 +36,7 @@ The solution provides:
 - A REST API built with FastAPI.
 - PostgreSQL database integration.
 - Docker-based application packaging.
-- Docker Compose orchestration.
+- Docker Compose or Kubernetes EKS orchestration.
 - Automated CI workflow using GitHub Actions.
 - Automated application and code-quality checks.
 - Container security scanning.
@@ -68,21 +68,23 @@ The primary objective is to demonstrate a reliable path from source code changes
            Docker Build
                  |
                  v
-             Docker Hub
+            Docker Hub
                  |
-                 v
-          Docker Compose
-                 |
-          +------+------+
-          |             |
-          v             v
-      FastAPI App    PostgreSQL
-          |
-     +----+-----+
-     |          |
-     v          v
-   Logs     Prometheus
-              Metrics
+        +--------+----------------------------+
+        |                                     |
+        v                                     v
+Docker Compose                             K8s "EKS" ----> AWS postgres RDS 
+       |                                      |
++------+------+                    Deployment, ConfigMap, Services, SecretProviderClass ----> AWS Secret Manager
+|             |
+v             v
+FastAPI App   PostgreSQL
+     |
++----+-----+
+|          |
+v          v
+Logs     Prometheus
+         Metrics
 ```
 
 ---
@@ -93,10 +95,10 @@ The primary objective is to demonstrate a reliable path from source code changes
 |---|---|
 | Programming Language | Python 3.12 |
 | Backend Framework | FastAPI |
-| Database | PostgreSQL |
+| Database | PostgreSQL or AWS RDS |
 | ORM | SQLAlchemy |
 | Containerization | Docker |
-| Orchestration | Docker Compose |
+| Orchestration | Docker Compose or Kubernetes |
 | CI/CD | GitHub Actions |
 | Linting | Ruff |
 | Testing | Pytest |
