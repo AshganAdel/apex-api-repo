@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: apex-api-deployment
+  labels:
+    app: apex-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: apex-api
+  template:
+    metadata:
+      labels:
+        app: apex-api
+    spec:
+      serviceAccountName: app-sa
+      containers:
+      - name: apex-api-container
+        image: docker.io/ashganadel/apex-api:40
+        ports:
+        - containerPort: 8000
+        envFrom:
+          - configMapRef:
+             name: apex-api-config
+        volumeMounts:
+          - name: secrets-store
+            mountPath: "/mnt/secrets-store"
+            readOnly: true
+      volumes:
+        - name: secrets-store
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: postgres-secret

@@ -1,0 +1,17 @@
+variable "cluster_name" {}
+variable "k8s_version" {}
+variable "enable_private_access" {}
+variable "enable_public_access" {}
+variable "eks_subnets_ids" {}
+variable "security_group_ids" {}
+variable "eks_nodes_subnets_ids" {}
+variable "node_group_name" {}
+variable "nodes_ec2_type" {}
+variable "max_nodes" {}
+variable "min_nodes" {}
+variable "desired_nodes" {}
+variable "rds_secret_arn" {}
+variable "eks_nodes_sg_id" {}
+variable "eks_iam_role_arn" {}
+variable "node_iam_role_arn" {}
+variable "pod_identity_role_arn" {}

@@ -10,4 +10,6 @@ tests/
 .gitignore
 docker-compose.yml
 Dockerfile
-README.md
+README.md 
+terraform/
+k8s/
