@@ -9,6 +9,7 @@ on:
       - '.gitignore'
       - 'docker-compose.yml'
       - '.env.example'
+      - 'k8s'
 
 jobs:
   ci:
