@@ -88,6 +88,7 @@ Key Project Implementations:
                  |
 Deployment, ConfigMap, Services, SecretProviderClass ----> AWS secret manager
 
+```
 ---
 
 ## Technology Stack
@@ -141,7 +142,6 @@ apex-api/
     └── RUNBOOK.md
 ```
 
----
 
 ## Application Features
 
