@@ -21,7 +21,6 @@ Designed and deployed a cloud-native REST API using FastAPI and Python, backed b
 - [Monitoring and Logging](#monitoring-and-logging)
 - [Deployment and Rollback](#deployment-and-rollback)
 - [Testing](#testing)
-- [Runbook](#runbook)
 
 ---
 
