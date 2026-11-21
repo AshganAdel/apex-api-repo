@@ -117,6 +117,8 @@ Deployment, ConfigMap, Services, SecretProviderClass ----> AWS secret manager
 | **Version Control** | Git, GitHub |
 ---
 
+---
+
 ## Project Structure
 
 ```text
@@ -146,6 +148,8 @@ apex-api/
 └── docs/
     └── RUNBOOK.md
 ```
+
+---
 
 ## Application Features
 
