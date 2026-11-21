@@ -476,26 +476,6 @@ GitHub Actions executes these tests as part of the CI pipeline.
 
 ---
 
-## Runbook
-
-Operational procedures are documented in:
-
-```text
-docs/RUNBOOK.md
-```
-
-The runbook covers:
-
-- Application deployment.
-- Deployment verification.
-- Rollback procedures.
-- Incident response.
-- Troubleshooting.
-- Log investigation.
-- Database connectivity issues.
-
----
-
 ## Project Objective
 
 This project demonstrates an end-to-end DevOps workflow for building, provisioning, securing, deploying, and monitoring a cloud-native application on AWS.
