@@ -8,6 +8,7 @@ The following diagram illustrates the overall architecture of the Apex API proje
 <p align="center">
   <img src="https://drive.google.com/uc?export=view&id=1HSPAiDnIjvbZFmLVol8fCzQG-XZFTird" alt="Apex API Architecture" width="100%">
 </p>
+
 ---
 
 ## Table of Contents
