@@ -1,9 +1,7 @@
 
 # Apex Operations API
 
-A containerized REST API demonstrating a reliable and reproducible application delivery workflow, from code commit to deployment.
-
-The project focuses on practical DevOps practices, including containerization, automated testing, CI pipelines, security checks, persistent storage, application observability, and operational procedures.
+Designed and deployed a cloud-native REST API using FastAPI and Python, backed by Amazon RDS PostgreSQL and hosted on a private Amazon EKS cluster. Provisioned AWS infrastructure using Terraform and implemented a CI/CD workflow using GitHub Actions and Argo CD. The project incorporates automated testing, security scanning, secure secrets management, GitOps-based deployments, and end-to-end monitoring using Prometheus and Grafana.
 
 ---
 
@@ -16,7 +14,7 @@ The project focuses on practical DevOps practices, including containerization, a
 - [Application Features](#application-features)
 - [Getting Started](#getting-started)
 - [Environment Configuration](#environment-configuration)
-- [Running with Docker Compose](#running-with-docker-compose)
+- [Running with Kubernetes](#running-with-docker-compose)
 - [API Endpoints](#api-endpoints)
 - [CI Pipeline](#ci-pipeline)
 - [Security](#security)
@@ -31,19 +29,32 @@ The project focuses on practical DevOps practices, including containerization, a
 
 Apex Operations API is a small backend service designed to demonstrate how an application can be packaged, tested, deployed, monitored, and maintained using modern DevOps practices.
 
-The solution provides:
+Key Project Implementations:
 
-- A REST API built with FastAPI.
-- PostgreSQL database integration.
-- Docker-based application packaging.
-- Docker Compose or Kubernetes EKS orchestration.
-- Automated CI workflow using GitHub Actions.
-- Automated application and code-quality checks.
-- Container security scanning.
-- Structured application logging and Prometheus metrics.
-- Versioned Docker images to support rollback.
+- **Infrastructure as Code:** Provisioned AWS infrastructure using Terraform, deploying an Amazon EKS cluster with three worker nodes distributed across three Availability Zones and Amazon RDS PostgreSQL.
 
-The primary objective is to demonstrate a reliable path from source code changes to a tested and deployable application.
+- **REST API Development:** Built a RESTful API using FastAPI and Python, supporting item retrieval, item updates, and retrieval by ID, with PostgreSQL for persistent data storage.
+
+- **CI Pipeline Automation:** Implemented a GitHub Actions pipeline to automate code linting, dependency installation, application testing, and Docker image building.
+
+- **DevSecOps Integration:** Integrated pip-audit for Python dependency vulnerability scanning and Trivy for Docker image security scanning, enforcing security checks before publishing images.
+
+- **Containerization:** Built and published versioned Docker images to Docker Hub as part of the automated CI workflow.
+
+- **Kubernetes Deployment:** Deployed the application on a private Amazon EKS cluster, distributing workloads across three worker nodes in three Availability Zones.
+
+- **GitOps & Continuous Deployment:** Integrated Argo CD with a Git repository containing Kubernetes manifests to automate application deployment and maintain synchronization between Git and the EKS cluster.
+
+- **Secure Secrets Management:** Integrated AWS Secrets Manager with the Secrets Store CSI Driver to securely retrieve and mount database credentials into application pods.
+
+- **AWS Pod Identity:** Configured EKS Pod Identity to grant application pods secure IAM access to AWS Secrets Manager without embedding static AWS credentials.
+
+- **Monitoring & Observability:** Implemented Prometheus and Grafana to collect and visualize application metrics and Kubernetes cluster performance.
+
+- **Application Health Monitoring:** Exposed application health, readiness, and Prometheus metrics endpoints to support health checks and application observability.
+
+- **Application Access & Ingress:** Configured AWS Application Load Balancer (ALB) with Kubernetes Ingress to expose Argo CD and Grafana dashboards.
+
 
 ---
 
@@ -70,42 +81,34 @@ The primary objective is to demonstrate a reliable path from source code changes
                  v
             Docker Hub
                  |
-        +--------+----------------------------+
-        |                                     |
-        v                                     v
-Docker Compose                             K8s "EKS" ----> AWS postgres RDS 
-       |                                      |
-+------+------+                    Deployment, ConfigMap, Services, SecretProviderClass ----> AWS Secret Manager
-|             |
-v             v
-FastAPI App   PostgreSQL
-     |
-+----+-----+
-|          |
-v          v
-Logs     Prometheus
-         Metrics
-```
+                 +
+                 |
+                 v
+    K8s "EKS" ----> AWS postgres RDS
+                 |
+Deployment, ConfigMap, Services, SecretProviderClass ----> AWS secret manager
 
 ---
 
 ## Technology Stack
 
-| Category | Technology |
+| Category | Technologies |
 |---|---|
-| Programming Language | Python 3.12 |
-| Backend Framework | FastAPI |
-| Database | PostgreSQL or AWS RDS |
-| ORM | SQLAlchemy |
-| Containerization | Docker |
-| Orchestration | Docker Compose or Kubernetes |
-| CI/CD | GitHub Actions |
-| Linting | Ruff |
-| Testing | Pytest |
-| Security Scanning | Trivy / pip-audit |
-| Metrics | Prometheus Client |
-| Logging | Python Logging |
-
+| **Backend Development** | Python 3.12, FastAPI |
+| **Database** | PostgreSQL 16, Amazon RDS |
+| **Cloud Platform** | AWS |
+| **Infrastructure as Code** | Terraform |
+| **Containerization** | Docker, Docker Hub |
+| **Container Orchestration** | Kubernetes, Amazon EKS |
+| **CI/CD** | GitHub Actions |
+| **GitOps & Deployment** | Argo CD |
+| **Secrets Management** | AWS Secrets Manager, Secrets Store CSI Driver, EKS Pod Identity |
+| **Monitoring & Observability** | Prometheus, Grafana |
+| **Networking & Load Balancing** | AWS Application Load Balancer (ALB), Kubernetes Ingress |
+| **Auto Scaling** | Kubernetes Horizontal Pod Autoscaler (HPA) |
+| **Code Quality & Testing** | Ruff, Pytest |
+| **Security Scanning** | pip-audit, Trivy |
+| **Version Control** | Git, GitHub |
 ---
 
 ## Project Structure
@@ -123,8 +126,8 @@ apex-api/
 ├── tests/
 │   └── test_main.py
 │
-├── Dockerfile
-├── compose.yaml
+├── k8s
+|   └── 
 ├── requirements.txt
 ├── .dockerignore
 ├── .gitignore
@@ -181,7 +184,7 @@ Checks whether the application is ready to serve requests, including database co
 Make sure you have the following installed:
 
 - Docker
-- Docker Compose
+- Kubernetes 
 - Git
 
 ### Clone the Repository
@@ -196,7 +199,7 @@ cd apex-api
 
 ## Environment Configuration
 
-Create a `.env` file in the project root:
+Create a `configMap` file in the project k8s files:
 
 ```env
 USER_NAME=your_dockerhub_username
@@ -215,7 +218,7 @@ Use `.env.example` to document the required variables without exposing secrets.
 
 ---
 
-## Running with Docker Compose
+## Running with Kubernetes
 
 Start the application and database:
 
