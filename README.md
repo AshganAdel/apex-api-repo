@@ -142,38 +142,56 @@ apex-api/
     └── RUNBOOK.md
 ```
 
-
 ## Application Features
 
 ### REST API
 
-The application exposes endpoints to manage operations.
+The application provides a RESTful API built with FastAPI and Python, backed by PostgreSQL on Amazon RDS.
 
-- Retrieve operations.
-- Retrieve an operation by ID.
-- Update an existing operation.
-- Check application health.
-- Check application readiness.
+Supported operations include:
+
+- Retrieve all items.
+- Retrieve an item by ID.
+- Update an existing item.
+- Check application health and readiness.
+- Expose application metrics for Prometheus monitoring.
 
 ### Health and Readiness Checks
 
-The application provides two operational endpoints:
+The application provides dedicated endpoints for Kubernetes health monitoring.
 
 **Health Check**
-
 ```http
 GET /health
 ```
-
-Checks whether the application is running.
+Verifies that the application is running.
 
 **Readiness Check**
-
 ```http
 GET /ready
 ```
+Verifies that the application is ready to serve requests, including database connectivity.
 
-Checks whether the application is ready to serve requests, including database connectivity.
+**Prometheus Metrics**
+```http
+GET /metrics
+```
+Exposes application metrics for Prometheus collection.
+
+---
+
+## Infrastructure Provisioning
+
+AWS infrastructure is provisioned using Terraform (Infrastructure as Code).
+
+The infrastructure includes:
+
+- Amazon VPC with public and private networking.
+- Amazon EKS cluster with private worker nodes.
+- Three worker nodes distributed across three Availability Zones.
+- Amazon RDS PostgreSQL for persistent database storage.
+- AWS IAM roles and policies for secure service access.
+- AWS Secrets Manager for database credentials management.
 
 ---
 
@@ -181,82 +199,117 @@ Checks whether the application is ready to serve requests, including database co
 
 ### Prerequisites
 
-Make sure you have the following installed:
+Make sure you have the following tools installed:
 
-- Docker
-- Kubernetes 
 - Git
+- Docker
+- Python 3.12
+- Terraform
+- AWS CLI
+- kubectl
+- Helm
 
 ### Clone the Repository
 
 ```bash
-git clone <YOUR_GITHUB_REPOSITORY_URL>
+git clone https://github.com/AshganAdel/apex-api-repo.git
 
-cd apex-api
+cd apex-api-repo
+```
+
+---
+
+## Infrastructure Deployment
+
+Navigate to the Terraform directory:
+
+```bash
+cd terraform
+```
+
+Initialize Terraform:
+
+```bash
+terraform init
+```
+
+Review the infrastructure changes:
+
+```bash
+terraform plan
+```
+
+Provision the AWS infrastructure:
+
+```bash
+terraform apply
 ```
 
 ---
 
 ## Environment Configuration
 
-Create a `configMap` file in the project k8s files:
+The application uses Kubernetes ConfigMaps for non-sensitive configuration and AWS Secrets Manager for sensitive database credentials.
 
-```env
-USER_NAME=your_dockerhub_username
-IMAGE_TAG=latest
+### ConfigMap
 
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=your_password
-POSTGRES_DB=apexdb
+The `configmap.yml` file contains database connection settings:
 
-DATABASE_URL=postgresql://postgres:your_password@db:5432/apexdb
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: apex-api-config
+data:
+  DB_HOST: "your-rds-endpoint"
+  DB_PORT: "5432"
+  DB_NAME: "appdb"
 ```
 
-**Important:** Never commit real credentials or sensitive environment variables to GitHub.
+### Secrets Management
 
-Use `.env.example` to document the required variables without exposing secrets.
+Database credentials are securely stored in AWS Secrets Manager.
+
+The application retrieves these credentials through:
+
+- EKS Pod Identity for IAM authentication.
+- AWS Secrets Manager for secure credential storage.
+- Secrets Store CSI Driver for mounting secrets into application pods.
+- SecretProviderClass for defining the secret retrieval configuration.
+
+**Important:** Never store database passwords or other sensitive credentials directly in Kubernetes ConfigMaps or Git repositories.
 
 ---
 
-## Running with Kubernetes
+## Kubernetes Deployment
 
-Start the application and database:
+The application runs on a private Amazon EKS cluster.
 
-```bash
-docker compose up -d
-```
+Kubernetes manifests are maintained in the `k8s/` directory.
 
-Check running containers:
+### Kubernetes Resources
 
-```bash
-docker compose ps
-```
+| Resource | Purpose |
+|---|---|
+| Deployment | Manages application pods and replicas. |
+| Service | Provides internal network access to the application. |
+| ConfigMap | Stores non-sensitive application configuration. |
+| SecretProviderClass | Integrates AWS Secrets Manager with Kubernetes. |
+| HPA | Automatically scales application pods based on resource utilization. |
+| ServiceMonitor | Configures Prometheus scraping for application metrics. |
+| Ingress | Configures external access to selected cluster services. |
 
-View application logs:
+### Application Deployment with Argo CD
 
-```bash
-docker compose logs -f app
-```
+Argo CD continuously monitors the Git repository containing Kubernetes manifests and synchronizes the desired application state with the EKS cluster.
 
-Check application health:
+This implements a GitOps-based deployment workflow.
 
-```bash
-curl http://localhost:8000/health
-```
+### Horizontal Pod Autoscaling
 
-Check readiness:
+The application uses Kubernetes Horizontal Pod Autoscaler (HPA) to automatically adjust the number of application replicas based on resource utilization.
 
-```bash
-curl http://localhost:8000/ready
-```
-
-Stop the application:
-
-```bash
-docker compose down
-```
-
-To stop the application without removing persistent database data, avoid using the `-v` option.
+This helps the application handle changing workloads without manually scaling pods.
 
 ---
 
@@ -264,14 +317,14 @@ To stop the application without removing persistent database data, avoid using t
 
 | Method | Endpoint | Description |
 |---|---|---|
-| GET | `/operations` | Retrieve all operations |
-| GET | `/operations/{operation_id}` | Retrieve an operation by ID |
-| PUT | `/operations/{operation_id}` | Update an existing operation |
-| GET | `/health` | Application health check |
-| GET | `/ready` | Application readiness check |
-| GET | `/metrics` | Prometheus metrics |
+| GET | `/operations` | Retrieve all operations. |
+| GET | `/operations/{operation_id}` | Retrieve an operation by ID. |
+| PUT | `/operations/{operation_id}` | Update an existing operation. |
+| GET | `/health` | Application health check. |
+| GET | `/ready` | Application readiness check. |
+| GET | `/metrics` | Expose Prometheus application metrics. |
 
-Interactive API documentation is available at:
+Interactive API documentation:
 
 ```text
 http://localhost:8000/docs
@@ -281,22 +334,26 @@ http://localhost:8000/docs
 
 ## CI Pipeline
 
-GitHub Actions automates the validation process whenever code is pushed to the repository.
+GitHub Actions automates the Continuous Integration workflow whenever code is pushed to the `main` branch.
 
 The pipeline includes:
 
-1. Dependency installation.
-2. Code quality checks using Ruff.
-3. Automated tests using Pytest.
-4. Dependency security auditing.
-5. Docker image build.
-6. Container vulnerability scanning.
+1. **Code Checkout:** Retrieves the latest source code.
+2. **Python Setup:** Configures Python 3.12.
+3. **Code Quality:** Runs Ruff to identify code quality issues.
+4. **Dependency Installation:** Installs application dependencies.
+5. **Dependency Security Scanning:** Uses pip-audit to identify vulnerable Python packages.
+6. **Automated Testing:** Executes Pytest against a PostgreSQL 16 service.
+7. **Docker Build:** Builds a versioned application image.
+8. **Container Security Scanning:** Uses Trivy to scan the Docker image for HIGH and CRITICAL vulnerabilities.
+9. **Artifact Upload:** Uploads test results and security reports.
+10. **Image Publishing:** Pushes the validated Docker image to Docker Hub.
 
-### Pipeline Behavior
+### Pipeline Security Gates
 
-The workflow is designed to stop when a required validation step fails.
+The pipeline is configured to fail when required validation or security scanning steps fail.
 
-This ensures that an application with failing tests or security-policy violations does not proceed through the successful CI pipeline.
+Trivy is configured with `exit-code: 1` for HIGH and CRITICAL vulnerabilities, preventing images with matching findings from proceeding to the publishing stage.
 
 ---
 
@@ -306,38 +363,61 @@ Security practices implemented in this project include:
 
 - Running the application as a non-root user.
 - Using a lightweight Python base image.
-- Managing configuration through environment variables.
-- Avoiding hardcoded credentials.
-- Scanning dependencies for known vulnerabilities.
-- Scanning Docker images for security vulnerabilities.
+- Managing non-sensitive configuration through Kubernetes ConfigMaps.
+- Storing database credentials in AWS Secrets Manager.
+- Using EKS Pod Identity for secure AWS service authentication.
+- Integrating Secrets Store CSI Driver for secret delivery to application pods.
+- Scanning Python dependencies using pip-audit.
+- Scanning Docker images using Trivy.
+- Integrating security checks into the CI pipeline.
 
 ---
 
-## Monitoring and Logging
+## Monitoring and Observability
 
-The application provides operational visibility through:
+Prometheus and Grafana provide monitoring and observability for both the application and Kubernetes cluster.
 
-**Structured Logging**
+### Application Monitoring
 
-Application logs include:
+The application exposes a `/metrics` endpoint that allows Prometheus to collect application-level metrics.
 
-- Timestamp.
-- Log level.
-- Request information.
-- HTTP response status.
-- Request duration.
+A Kubernetes ServiceMonitor is configured to enable Prometheus metric discovery and scraping.
 
-**Prometheus Metrics**
+### Kubernetes Monitoring
 
-The `/metrics` endpoint exposes application metrics that can be collected by Prometheus.
+Prometheus collects cluster-related metrics to help monitor:
 
-These metrics help monitor application behavior and identify potential performance issues.
+- Pod resource utilization.
+- CPU and memory usage.
+- Kubernetes workload health.
+- Application availability and performance.
+
+### Grafana Dashboards
+
+Grafana provides dashboards for visualizing application and Kubernetes metrics.
+
+These dashboards help identify performance issues, monitor resource consumption, and observe application behavior.
+
+---
+
+## Application Access
+
+AWS Application Load Balancer (ALB) is integrated with Kubernetes Ingress to provide external access to selected cluster services.
+
+Ingress resources are configured for:
+
+- Argo CD dashboard.
+- Grafana monitoring dashboard.
+
+The application itself runs on private EKS worker nodes, while its database is hosted on Amazon RDS.
 
 ---
 
 ## Deployment and Rollback
 
-Docker images are versioned using unique tags.
+### CI Image Versioning
+
+Docker images are tagged using the GitHub Actions run number.
 
 Example:
 
@@ -349,46 +429,28 @@ ashganadel/apex-api:27
 
 ### Deployment
 
-Update the image tag in `.env`:
+GitHub Actions builds and publishes the application image to Docker Hub.
 
-```env
-IMAGE_TAG=27
-```
+Argo CD monitors the Kubernetes manifests repository and synchronizes the desired deployment configuration with the EKS cluster.
 
-Deploy the new version:
-
-```bash
-docker compose pull
-docker compose up -d
-```
+The image tag is managed through the Kubernetes Deployment manifest.
 
 ### Rollback
 
-If the new version introduces an issue, update the image tag to the previous stable version:
+If a new application version introduces issues:
 
-```env
-IMAGE_TAG=26
-```
+1. Update the image tag in the Kubernetes Deployment manifest to the previous stable version.
+2. Commit and push the change to Git.
+3. Allow Argo CD to synchronize the updated manifest.
+4. Verify application recovery through health checks and monitoring dashboards.
 
-Then run:
-
-```bash
-docker compose pull
-docker compose up -d
-```
-
-Verify application recovery:
-
-```bash
-docker compose ps
-curl http://localhost:8000/health
-```
+This follows a GitOps-based rollback approach.
 
 ---
 
 ## Testing
 
-Automated tests are implemented using Pytest.
+Automated application tests are implemented using Pytest.
 
 Run the test suite locally:
 
@@ -399,7 +461,7 @@ pytest -v
 Run code quality checks:
 
 ```bash
-ruff check .
+ruff check . --ignore B008
 ```
 
 The test suite validates application behavior, including:
@@ -410,7 +472,7 @@ The test suite validates application behavior, including:
 - Request validation.
 - Expected HTTP responses.
 
-The CI workflow also demonstrates failure handling by introducing an intentional test failure and verifying that the pipeline correctly blocks the unsuccessful run.
+GitHub Actions executes these tests as part of the CI pipeline.
 
 ---
 
@@ -436,6 +498,6 @@ The runbook covers:
 
 ## Project Objective
 
-This project demonstrates practical DevOps engineering skills through a reproducible application delivery workflow.
+This project demonstrates an end-to-end DevOps workflow for building, provisioning, securing, deploying, and monitoring a cloud-native application on AWS.
 
-It emphasizes automation, reliability, security, observability, and operational readiness rather than simply running an application inside a container.
+It combines Infrastructure as Code, automated CI pipelines, DevSecOps practices, Kubernetes orchestration, GitOps-based deployments, secure secrets management, auto-scaling, and observability to deliver a reliable and maintainable application environment.
