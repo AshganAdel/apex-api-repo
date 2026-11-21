@@ -3,6 +3,11 @@
 
 Designed and deployed a cloud-native REST API using FastAPI and Python, backed by Amazon RDS PostgreSQL and hosted on a private Amazon EKS cluster. Provisioned AWS infrastructure using Terraform and implemented a CI/CD workflow using GitHub Actions and Argo CD. The project incorporates automated testing, security scanning, secure secrets management, GitOps-based deployments, and end-to-end monitoring using Prometheus and Grafana.
 
+The following diagram illustrates the overall architecture of the Apex API project, covering AWS infrastructure, CI/CD automation, Kubernetes deployment, security, and monitoring.
+
+<p align="center">
+  <img src="https://drive.google.com/uc?export=view&id=1HSPAiDnIjvbZFmLVol8fCzQG-XZFTird" alt="Apex API Architecture" width="100%">
+</p>
 ---
 
 ## Table of Contents
